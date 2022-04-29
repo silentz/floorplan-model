@@ -8,6 +8,9 @@ from typing import Dict, Any
 import torch
 import torchvision
 from torch.utils.data import Dataset
+import torch.nn.functional as F
+
+from . import transforms
 
 
 _datasets = {
@@ -47,6 +50,18 @@ class EnsureDatasetMixin:
 
 class NewYorkDataset(EnsureDatasetMixin, Dataset):
 
+    _rgb2roomtype = {
+        0: [  0,  0,  0], # background
+        1: [192,192,224], # closet
+        2: [192,255,255], # bathroom
+        3: [224,255,192], # livingroom/kitchen
+        4: [255,224,128], # bedroom
+        5: [255,160, 96], # hall
+        6: [255,224,224], # balcony
+        7: [224,224,224], # unused
+        8: [224,224,128]  # unused
+    }
+
     def __init__(self, root: str, subdir: str):
         super().__init__(root, 'newyork')
         self._root = os.path.join(root, subdir)
@@ -75,7 +90,47 @@ class NewYorkDataset(EnsureDatasetMixin, Dataset):
 
         image = read_image(self._items[idx]['origin'])
         rooms = read_image(self._items[idx]['rooms'])
+        close = read_image(self._items[idx]['close'])
         walls = read_image(self._items[idx]['wall'])
 
-        return {'image': image, 'rooms': rooms, 'walls': walls}
+        rooms = rooms.permute(1, 2, 0)
+        rooms_mask = torch.zeros(image.shape[1], image.shape[2], dtype=torch.uint8)
+
+        for class_idx, rgb in self._rgb2roomtype.items():
+            rgb = torch.tensor(rgb, dtype=torch.uint8)
+            mask = (rooms == rgb)
+            mask = torch.all(mask, dim=2)
+            rooms_mask[mask] = class_idx
+
+        close = torch.all(close > 0, dim=0)
+        walls = torch.all(walls > 0, dim=0)
+        bound_mask = torch.zeros(image.shape[1], image.shape[2], dtype=torch.uint8)
+        bound_mask[walls] = 1
+        bound_mask[close] = 2
+
+        result = {
+                'image': image,
+                'rooms': rooms_mask.unsqueeze(dim=0),
+                'bound': bound_mask.unsqueeze(dim=0),
+            }
+
+        return result
+
+
+class AugmentedNewYorkDataset(NewYorkDataset):
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.transforms = transforms.Compose(
+                transforms.RandomHorizontalFlip(p=0.5),
+                transforms.RandomVerticalFlip(p=0.5),
+                transforms.RandomRotation(),
+                transforms.Resize(512),
+            )
+
+    def __getitem__(self, idx: int) -> Dict[str, Any]:
+        item = super().__getitem__(idx)
+        item = self.transforms.apply(item)
+        return item
 
