@@ -14,10 +14,10 @@ from . import transforms
 
 
 _datasets = {
-    'newyork': {
-        'url': 'http://silentz.ml/newyork.zip',
-        'arc': 'newyork.zip',
-        'dst': 'newyork',
+    'floorplans': {
+        'url': 'http://silentz.ml/floorplans.zip',
+        'arc': 'floorplans.zip',
+        'dst': 'floorplans',
     },
 }
 
@@ -63,7 +63,7 @@ class NewYorkDataset(EnsureDatasetMixin, Dataset):
     }
 
     def __init__(self, root: str, subdir: str):
-        super().__init__(root, 'newyork')
+        super().__init__(root, 'floorplans')
         self._root = os.path.join(root, subdir)
 
         all_files = os.listdir(self._root)

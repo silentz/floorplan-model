@@ -34,7 +34,7 @@ data:
     class_path: src.dataset.AugmentedNewYorkDataset
     init_args:
       root: data/
-      subdir: newyork/train
+      subdir: floorplans/train
   train_batch_size: 16
   train_num_workers: 16
 
@@ -42,6 +42,6 @@ data:
     class_path: src.dataset.AugmentedNewYorkDataset
     init_args:
       root: data/
-      subdir: newyork/test
+      subdir: floorplans/test
   val_batch_size: 8
   val_num_workers: 1
