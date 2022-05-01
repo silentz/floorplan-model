@@ -110,7 +110,7 @@ class NewYorkDataset(EnsureDatasetMixin, Dataset):
 
         result = {
                 'image': image,
-                'mask': plan_mask.unsqueeze(dim=0),
+                'mask': plan_mask.unsqueeze(dim=0).long(),
             }
 
         return result

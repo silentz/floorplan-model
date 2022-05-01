@@ -19,7 +19,7 @@ def collate_fn(inputs: list) -> Batch:
     images = torch.stack(images, dim=0)
 
     masks = [x['mask'] for x in inputs]
-    masks = torch.stack(masks, dim=0)
+    masks = torch.cat(masks, dim=0)
 
     return Batch(
             images=images,

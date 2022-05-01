@@ -1,0 +1,43 @@
+seed_everything: 42
+
+trainer:
+  gpus: 1
+  max_epochs: 1
+  num_sanity_val_steps: 2
+  precision: 32
+  deterministic: false
+  auto_lr_find: false
+  callbacks:
+    - class_path: pytorch_lightning.callbacks.model_checkpoint.ModelCheckpoint
+      init_args:
+        dirpath: checkpoints/
+        save_top_k: -1
+  logger:
+    class_path: pytorch_lightning.loggers.WandbLogger
+    init_args:
+      project: floorplan
+      save_dir: lightning_logs/
+
+torchscript:
+  path: export/model.pt
+
+model:
+  n_classes: 11
+  optimizer_lr: 0.0001
+
+data:
+  train_dataset:
+    class_path: src.dataset.AugmentedNewYorkDataset
+    init_args:
+      root: data/
+      subdir: newyork/train
+  train_batch_size: 16
+  train_num_workers: 16
+
+  val_dataset:
+    class_path: src.dataset.AugmentedNewYorkDataset
+    init_args:
+      root: data/
+      subdir: newyork/test
+  val_batch_size: 8
+  val_num_workers: 1
