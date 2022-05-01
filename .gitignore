@@ -1,4 +1,5 @@
 lightning_logs/
+!lightning_logs/.gitkeep
 checkpoints/*
 !checkpoints/.gitkeep
 data/*
