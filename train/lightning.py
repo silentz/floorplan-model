@@ -50,10 +50,8 @@ class Module(pl.LightningModule):
 
     def __init__(self, n_classes: int,
                        pretrained_vgg: bool,
-                       freeze_vgg: bool,
-                       optimizer_lr: float):
+                       freeze_vgg: bool):
         super().__init__()
-        self._optim_lr = optimizer_lr
         self.model = Model(n_classes=n_classes,
                            pretrained_vgg=pretrained_vgg,
                            freeze_vgg=freeze_vgg)
@@ -62,9 +60,13 @@ class Module(pl.LightningModule):
     def configure_optimizers(self):
         optim = torch.optim.Adam(
                 self.model.parameters(),
-                lr = self._optim_lr,
+                lr=0.001,
             )
-        return optim
+        sched = torch.optim.lr_scheduler.LambdaLR(
+                optimizer=optim,
+                lr_lambda=lambda epoch: 1e-3 * (0.32 ** epoch),
+            )
+        return optim, sched
 
     def _normalize(self, input: torch.Tensor) -> torch.Tensor:
         input = input / 255
