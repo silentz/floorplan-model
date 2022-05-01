@@ -8,39 +8,10 @@ import torchvision
 from torchvision.models.feature_extraction import create_feature_extractor
 
 
-class SpatialContextualModule(nn.Module):
-
-    def __init__(self, channels: int):
-        super().__init__()
-
-        self.conv_b1 = nn.Conv2d(in_channels=channels, out_channels=channels, kernel_size=3, stride=1, padding=1)
-        self.conv_b2 = nn.Conv2d(in_channels=channels, out_channels=channels, kernel_size=3, stride=1, padding=1)
-        self.conv_b3 = nn.Conv2d(in_channels=channels, out_channels=1,        kernel_size=1, stride=1, padding=0)
-
-        self.conv_r1 = nn.Conv2d(in_channels=channels, out_channels=channels, kernel_size=3, stride=1, padding=1)
-        self.conv_r2 = nn.Conv2d(in_channels=channels, out_channels=1,        kernel_size=1, stride=1, padding=0)
-
-    def forward(self, xb: torch.Tensor, xr: torch.Tensor) -> torch.Tensor:
-        xb = F.relu(self.conv_b1(xb))
-        xb = F.relu(self.conv_b2(xb))
-        xb = torch.sigmoid(self.conv_b3(xb))
-
-        xr = F.relu(self.conv_r1(xr))
-        xr = torch.sigmoid(self.conv_r2(xr))
-
-        # TODO: attention
-        # TODO: direction aware kernels
-        # TODO: attention 2
-        # TODO: expand
-        # TODO: concat
-        # TODO: reduce
-
-
-
 class Model(nn.Module):
 
-    def __init__(self, pretrained_vgg: bool = True,
-                       n_boundary_classes: int = 3):
+    def __init__(self, n_classes: int = 11,
+                       pretrained_vgg: bool = True):
         super().__init__()
 
         # init vgg encoder
@@ -49,7 +20,7 @@ class Model(nn.Module):
                 return_nodes={'4': '256', '9': '128', '16': '64', '23': '32', '30': '16'},
             )
 
-        #  boundary decoder
+        #  decoder
         ## block 1 (16 -> 32)
         self.b_01_upsample = nn.ConvTranspose2d(in_channels=512, out_channels=256, kernel_size=4, stride=2, padding=1)
         self.b_01_encoder  = nn.Conv2d(in_channels=512, out_channels=256, kernel_size=3, stride=1, padding=1)
@@ -71,10 +42,8 @@ class Model(nn.Module):
         self.b_04_filter   = nn.Conv2d(in_channels=32, out_channels=32, kernel_size=3, stride=1, padding=1)
 
         ## finalize (256 -> 256)
-        self.b_finalize    = nn.Conv2d(in_channels=32, out_channels=n_boundary_classes,
+        self.b_finalize    = nn.Conv2d(in_channels=32, out_channels=n_classes,
                                        kernel_size=3, stride=1, padding=1)
-
-        # TODO: add room features
 
 
     def forward(self, input: torch.Tensor) -> torch.Tensor:

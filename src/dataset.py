@@ -94,24 +94,23 @@ class NewYorkDataset(EnsureDatasetMixin, Dataset):
         walls = read_image(self._items[idx]['wall'])
 
         rooms = rooms.permute(1, 2, 0)
-        rooms_mask = torch.zeros(image.shape[1], image.shape[2], dtype=torch.uint8)
+        plan_mask = torch.zeros(image.shape[1], image.shape[2], dtype=torch.uint8)
 
         for class_idx, rgb in self._rgb2roomtype.items():
             rgb = torch.tensor(rgb, dtype=torch.uint8)
             mask = (rooms == rgb)
             mask = torch.all(mask, dim=2)
-            rooms_mask[mask] = class_idx
+            plan_mask[mask] = class_idx
+
+        walls = torch.all(walls > 0, dim=0)
+        plan_mask[walls] = 9
 
         close = torch.all(close > 0, dim=0)
-        walls = torch.all(walls > 0, dim=0)
-        bound_mask = torch.zeros(image.shape[1], image.shape[2], dtype=torch.uint8)
-        bound_mask[walls] = 1
-        bound_mask[close] = 2
+        plan_mask[close] = 10
 
         result = {
                 'image': image,
-                'rooms': rooms_mask.unsqueeze(dim=0),
-                'bound': bound_mask.unsqueeze(dim=0),
+                'mask': plan_mask.unsqueeze(dim=0),
             }
 
         return result
