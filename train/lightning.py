@@ -1,9 +1,9 @@
 import torch
 import torch.nn.functional as F
-import torchvision
 from torch.utils.data import Dataset
 from torch.utils.data import DataLoader
 import torchvision.transforms.functional as TF
+from torchvision.utils import make_grid
 
 import wandb
 import pytorch_lightning as pl
@@ -90,19 +90,24 @@ class Module(pl.LightningModule):
 
         return {
                 'images': batch.images.detach().cpu(),
+                'targets': batch.masks.detach().cpu(),
                 'masks': masks.detach().cpu(),
             }
 
     def validation_epoch_end(self, outputs: List[Dict[str, Any]]):
-        images = []
+        result = []
 
         for output in outputs:
-            for image, mask in zip(output['images'], output['masks']):
+            images = output['images']
+            targets = output['targets']
+            masks = output['masks']
+
+            for image, target, mask in zip(images, targets, masks):
                 mask = mask2rgb(mask)
-                image_pair = torchvision.utils.make_grid([image, mask])
-                image = wandb.Image(image_pair.float())
-                images.append(image)
+                target = mask2rgb(target)
+                sample = make_grid([image, target, mask])
+                result.append(wandb.Image(sample.float()))
 
         self.logger.experiment.log({
-                'images': images,
+                'images': result,
             })
