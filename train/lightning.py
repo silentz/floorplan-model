@@ -12,6 +12,7 @@ from typing import Any, Dict, List
 from src.collate import collate_fn, Batch
 from src.model import Model
 from src.utils import mask2rgb
+from src.sampler import InfiniteSampler
 
 
 class DataModule(pl.LightningDataModule):
@@ -30,6 +31,7 @@ class DataModule(pl.LightningDataModule):
                 'batch_size': train_batch_size,
                 'num_workers': train_num_workers,
                 'collate_fn': collate_fn,
+                'sampler': InfiniteSampler(train_dataset),
             }
         self.val_dataloader_kwargs = {
                 'batch_size': val_batch_size,
@@ -47,10 +49,14 @@ class DataModule(pl.LightningDataModule):
 class Module(pl.LightningModule):
 
     def __init__(self, n_classes: int,
+                       pretrained_vgg: bool,
+                       freeze_vgg: bool,
                        optimizer_lr: float):
         super().__init__()
         self._optim_lr = optimizer_lr
-        self.model = Model(n_classes=n_classes)
+        self.model = Model(n_classes=n_classes,
+                           pretrained_vgg=pretrained_vgg,
+                           freeze_vgg=freeze_vgg)
         self.save_hyperparameters()
 
     def configure_optimizers(self):

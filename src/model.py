@@ -11,7 +11,8 @@ from torchvision.models.feature_extraction import create_feature_extractor
 class Model(nn.Module):
 
     def __init__(self, n_classes: int = 11,
-                       pretrained_vgg: bool = True):
+                       pretrained_vgg: bool = True,
+                       freeze_vgg: bool = True):
         super().__init__()
 
         # init vgg encoder
@@ -19,6 +20,10 @@ class Model(nn.Module):
                 model=torchvision.models.vgg16(pretrained=pretrained_vgg).features,
                 return_nodes={'4': '256', '9': '128', '16': '64', '23': '32', '30': '16'},
             )
+
+        if freeze_vgg:
+            for param in self.encoder.parameters():
+                param.requires_grad = False
 
         #  decoder
         ## block 1 (16 -> 32)
