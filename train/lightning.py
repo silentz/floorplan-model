@@ -71,7 +71,9 @@ class Module(pl.LightningModule):
         return input
 
     def forward(self, input: torch.Tensor) -> torch.Tensor:
-        return input
+        input  = self._normalize(input)
+        logits = self.model(input)
+        return logits
 
     def training_step(self, batch: Batch, batch_idx: int) -> Any:
         images = self._normalize(batch.images)
