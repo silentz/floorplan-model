@@ -60,13 +60,9 @@ class Module(pl.LightningModule):
     def configure_optimizers(self):
         optim = torch.optim.Adam(
                 self.model.parameters(),
-                lr=0.001,
+                lr=0.0001,
             )
-        sched = torch.optim.lr_scheduler.LambdaLR(
-                optimizer=optim,
-                lr_lambda=lambda epoch: 1e-3 * (0.32 ** epoch),
-            )
-        return optim, sched
+        return optim
 
     def _normalize(self, input: torch.Tensor) -> torch.Tensor:
         input = input / 255
